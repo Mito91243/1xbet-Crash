@@ -4,6 +4,7 @@
         "puppeteer": "^21.7.0",
         "puppeteer-extra": "^3.3.6",
         "puppeteer-extra-plugin-stealth": "^2.11.2",
-        "websocket": "^1.0.34"
+        "websocket": "^1.0.34",
+        "xlsx": "^0.18.5"
     }
 }
