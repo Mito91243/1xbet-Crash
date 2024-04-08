@@ -1,48 +1,44 @@
+import puppeteer from "puppeteer-extra";
 import fs from "fs";
-import puppeteer from "puppeteer";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+puppeteer.use(StealthPlugin());
 
-async function Get_Stocks_EG() {
-  // Launch the browser and open a new blank page
+async function get_data() {
   const browser = await puppeteer.launch({
-    headless: "true",
+    headless: false,
   });
+
+  const loginUrl = "https://1xlite-394299.top/en/allgamesentrance/crash";
+  const ua =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36";
   const page = await browser.newPage();
 
-  // Navigate the page to a URL
-  await page.goto(
-    "https://www.tradingview.com/markets/stocks-egypt/market-movers-all-stocks/"
-  );
+  await page.setUserAgent(ua);
+  await page.goto(loginUrl, { waitUntil: "networkidle2" });
+  await page.waitForTimeout(10000);
+  await page.waitForTimeout(10000);
 
-  // Wait and click on first result
-  // Click the button to load more content
-  await page.click(".loadButton-SFwfC2e0");
-  await page.waitForTimeout(4000);
-  await page.click(".loadButton-SFwfC2e0");
-  await page.waitForTimeout(4000);
+  console.log(await page.evaluate(() => document.documentElement.outerHTML));
+
 
   const extractedData = await page.evaluate(() => {
-    //Create Empty Array to push Data into
-    const data = [];
+    console.log(document.documentElement.outerHTML);
+    // Target the parent div
+    // Target the div elements inside the parent div
+    const childDivs = document.querySelectorAll("#games_page > div.crash.games-container__game > div.crash-popup.crash-popup--players > div.crash-popup__overflow > div > div.crash-popup__rows.crash-popup__rows--less > div");
 
-    //Get All Table ROWS
-    const tableRows = document.querySelectorAll("tbody > tr");
-
-    // Loop through each row and extract data from elements within <td> cells
-    tableRows.forEach((row) => {
+    // Loop through each child div
+    childDivs.forEach((row) => {
+      // Your code here to process each child div
       //Get all TD cells inside each row
-      const cells = row.querySelectorAll("td");
+      const cells = row.querySelectorAll("p");
       //Query each td as you like in celldata object
       const celldata = {
-        Name: cells[0].querySelector("span > sup").textContent,
-        Ticker: cells[0].querySelector("span > a").textContent,
-        Price: cells[1].textContent,
-        Percent: cells[2].textContent,
-        Price_Chg: cells[3].querySelector("span").textContent,
-        Rating: cells[4].textContent,
-        Volume: cells[5].textContent,
-        // Add more properties as needed
+        Idintifier: cells[0].textContent,
+        Multiplier_w: cells[1].textContent,
+        Bet_Amount: cells[2].textContent,
+        Cashout: cells[3].textContent,
       };
-
       //Push the object into the data again
       data.push(celldata);
     });
@@ -50,15 +46,10 @@ async function Get_Stocks_EG() {
     return data;
   });
 
-  //console.log(extractedData);
-  await browser.close();
-  try {
-    const jsonData = JSON.stringify(extractedData, null, 2);
+  console.log(extractedData);
 
-    fs.writeFileSync("./data/Stocks_EG.json", jsonData, "utf8");
-    console.log("Data written to Stocks_EG.json");
-  } catch (error) {
-    console.error("Error:", error);
-  }
+
 }
+get_data();
 
+// GameData  ->> .crash-popup__header
