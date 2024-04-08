@@ -18,7 +18,6 @@ async function get_data() {
   await page.setUserAgent(ua);
   await page.goto(loginUrl, { waitUntil: "networkidle2" });
 
-
   const x = 5;
   let game_counter = 0;
   while (x === 5) {
@@ -47,6 +46,30 @@ async function get_data() {
       });
       return data;
     }, game_counter);
+
+    const extractedStats = await page.evaluate(() => {
+
+      const player_num = document.querySelector(
+        "#games_page > div.crash.games-container__game > div.crash-players-bets.crash__wrap.crash__wrap--left > div.crash-players-bets__total.crash-total > div:nth-child(1) > span"
+      );
+      const total_bets = document.querySelector(
+        "#games_page > div.crash.games-container__game > div.crash-players-bets.crash__wrap.crash__wrap--left > div.crash-players-bets__total.crash-total > div:nth-child(2) > span"
+      );
+      const total_winnings = document.querySelector(
+        "#games_page > div.crash.games-container__game > div.crash-players-bets.crash__wrap.crash__wrap--left > div.crash-players-bets__total.crash-total > div:nth-child(3) > span"
+      );
+
+      const celldata = {
+        Players: player_num.textContent.trim(),
+        Bets: total_bets.textContent.trim(),
+        Winnings: total_winnings.textContent.trim(),
+        casino_balance: parseFloat(total_bets.textContent.trim().split(' ')[0]) - parseFloat(total_winnings.textContent.trim().split(' ')[0]),
+      };
+
+      return celldata;
+    });
+    //console.log(`Game id ${game_counter} has been logged`);
+    console.log(extractedStats);
     await writeToExcel(extractedData);
   }
 }
