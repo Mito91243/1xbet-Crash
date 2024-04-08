@@ -18,8 +18,7 @@ async function get_data() {
   await page.setUserAgent(ua);
   await page.goto(loginUrl, { waitUntil: "networkidle2" });
 
-  //console.log(await page.evaluate(() => document.documentElement.innerHTML));
-  //let combined_data = [];
+
   const x = 5;
   let game_counter = 0;
   while (x === 5) {
@@ -48,7 +47,6 @@ async function get_data() {
       });
       return data;
     }, game_counter);
-    //combined_data.push(extractedData);
     await writeToExcel(extractedData);
   }
 }
