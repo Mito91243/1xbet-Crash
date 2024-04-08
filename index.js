@@ -8,36 +8,37 @@ async function get_data() {
     headless: false,
   });
 
-  const loginUrl = "https://1xlite-394299.top/en/allgamesentrance/crash";
+  const loginUrl =
+    "https://1xlite-394299.top/games-frame/games/371?co=66&cu=119&lg=en&wh=55&tzo=3";
   const ua =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36";
   const page = await browser.newPage();
 
   await page.setUserAgent(ua);
   await page.goto(loginUrl, { waitUntil: "networkidle2" });
-  await page.waitForTimeout(10000);
-  await page.waitForTimeout(10000);
 
-  console.log(await page.evaluate(() => document.documentElement.outerHTML));
+  //console.log(await page.evaluate(() => document.documentElement.innerHTML));
 
+  await page.waitForSelector(
+    "div.crash-game__wrap > div.crash-game__pin.crash-game__pin--crash"
+  );
 
   const extractedData = await page.evaluate(() => {
-    console.log(document.documentElement.outerHTML);
-    // Target the parent div
+    let data = [];
     // Target the div elements inside the parent div
-    const childDivs = document.querySelectorAll("#games_page > div.crash.games-container__game > div.crash-popup.crash-popup--players > div.crash-popup__overflow > div > div.crash-popup__rows.crash-popup__rows--less > div");
+    const tableRows = document.querySelectorAll("tbody > tr");
 
-    // Loop through each child div
-    childDivs.forEach((row) => {
+    // Loop through each row and extract data from elements within <td> cells
+    tableRows.forEach((row) => {
       // Your code here to process each child div
       //Get all TD cells inside each row
-      const cells = row.querySelectorAll("p");
+      const cells = row.querySelectorAll("td");
       //Query each td as you like in celldata object
       const celldata = {
-        Idintifier: cells[0].textContent,
-        Multiplier_w: cells[1].textContent,
-        Bet_Amount: cells[2].textContent,
-        Cashout: cells[3].textContent,
+        Idintifier: cells[0].textContent.trim(),
+        Multiplier_w: cells[1].textContent.trim(),
+        Bet_Amount: cells[2].textContent.trim(),
+        Cashout: cells[3].textContent.trim(),
       };
       //Push the object into the data again
       data.push(celldata);
@@ -47,8 +48,6 @@ async function get_data() {
   });
 
   console.log(extractedData);
-
-
 }
 get_data();
 
