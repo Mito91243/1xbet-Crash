@@ -20,6 +20,7 @@ async function get_data() {
 
   const x = 5;
   let game_counter = 0;
+  let Cumlative_Balance = 0;
   while (x === 5) {
     game_counter = game_counter + 1;
     await page.reload();
@@ -48,7 +49,6 @@ async function get_data() {
     }, game_counter);
 
     const extractedStats = await page.evaluate(() => {
-
       const player_num = document.querySelector(
         "#games_page > div.crash.games-container__game > div.crash-players-bets.crash__wrap.crash__wrap--left > div.crash-players-bets__total.crash-total > div:nth-child(1) > span"
       );
@@ -63,18 +63,21 @@ async function get_data() {
         Players: player_num.textContent.trim(),
         Bets: total_bets.textContent.trim(),
         Winnings: total_winnings.textContent.trim(),
-        casino_balance: parseFloat(total_bets.textContent.trim().split(' ')[0]) - parseFloat(total_winnings.textContent.trim().split(' ')[0]),
+        casino_balance:
+          (parseFloat(total_bets.textContent.trim().split(" ")[0]) -
+          parseFloat(total_winnings.textContent.trim().split(" ")[0])).toFixed(2),
       };
 
       return celldata;
     });
     //console.log(`Game id ${game_counter} has been logged`);
-    console.log(extractedStats);
-    await writeToExcel(extractedData);
+    Cumlative_Balance = extractedStats.casino_balance + Cumlative_Balance
+    
+    await writeToExcel_PlayersData(extractedData);
   }
 }
 
-async function writeToExcel(data) {
+async function writeToExcel_PlayersData(data) {
   try {
     let wb;
     let ws;
