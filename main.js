@@ -3,7 +3,12 @@ const WebSocket = require("ws");
 // Initialize total bid sum
 let totalBid = 0;
 let totalWin = 0;
-
+let total_players = 0;
+let total_winners = 0;
+let odds = 0;
+let timestamp;
+let game_id = -1;
+let cumlative_casino_earnings = 0;
 // Function to connect to the WebSocket server
 function connect_to_crash() {
   const socket = new WebSocket(
@@ -39,8 +44,8 @@ function connect_to_crash() {
       return;
     }
     if (messageObj.target === "OnStage") {
-        reset(messageObj);
-      }
+      reset(messageObj);
+    }
 
     if (messageObj.target === "OnBets") {
       OnBets(messageObj);
@@ -66,17 +71,25 @@ function connect_to_crash() {
 }
 function reset() {
   // We print the totalbid sum here before resetting
-  console.log("Total Bids:", totalBid);
-  console.log("Total Winnings:", totalWin);
-  console.log("Casino Earnings: ", totalBid - totalWin);
+  cumlative_casino_earnings = totalBid - totalWin;
+  game_id += 1;
+  print_results();
   totalBid = 0;
   totalWin = 0;
+  odds = 0;
+  total_players = 0;
+  total_winners = 0;
 }
 function OnCrash(messageObj) {
   // Check if the message is of type 'OnCrash' and extract 'f' and timestamp
   const fValue = messageObj.arguments[0].f;
-  const timestampUTC = new Date(messageObj.arguments[0].ts).toUTCString();
-  console.log("OnCrash - Odds:", fValue, "Timestamp (UTC):", timestampUTC);
+  const timestampUTC = new Date(messageObj.arguments[0].ts);
+  const timestampGMT2 = timestampUTC.toLocaleString("en-US", {
+    timeZone: "Europe/Berlin",
+  });
+  timestamp = timestampGMT2;
+  odds = fValue;
+  //console.log("OnCrash - Odds:", fValue, "Timestamp (UTC):", timestampUTC);
 }
 function OnBets(messageObj) {
   let bid = messageObj.arguments[0].bid;
@@ -89,8 +102,25 @@ function OnCashout(messageObj) {
   if (totalWin < win) {
     totalWin = win;
   }
-  //const { l, won, d, n, q } = messageObj.arguments[0];
+  const { l, won, d, n, q } = messageObj.arguments[0];
+  total_players = n;
+  total_winners = d;
   //console.log(`Players Lost ${d} from ${n}`);
   // q is the array of id's of winners with ou much they won and the odds the won at
+}
+
+function print_results() {
+  console.log(
+    "***********************************************************************************************************************"
+  );
+  console.log("Number of Players:", odds < 1.14 ? 9500 : total_players);
+  console.log("Odds:", odds);
+  console.log("Total Bids:", totalBid.toFixed(2));
+  console.log("Total Winnings:", totalWin.toFixed(2));
+  console.log("Players Lost:", total_winners);
+  console.log("Casino Earnings:", (totalBid - totalWin).toFixed(2));
+  console.log("Timestamp:", timestamp);
+  console.log(`Game ID: ${game_id}`);
+  console.log(`Casino Cumlative Earnings: ${cumlative_casino_earnings}`);
 }
 connect_to_crash();
