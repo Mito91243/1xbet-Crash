@@ -3,7 +3,7 @@ const WebSocket = require("ws");
 // Initialize total bid sum
 let totalBid = 0;
 let totalWin = 0;
-let isAfterCrash = false;
+
 // Function to connect to the WebSocket server
 function connect_to_crash() {
   const socket = new WebSocket(
@@ -38,10 +38,9 @@ function connect_to_crash() {
       console.error("Error parsing JSON:", error);
       return;
     }
-
     if (messageObj.target === "OnStage") {
-      OnStage();
-    }
+        reset(messageObj);
+      }
 
     if (messageObj.target === "OnBets") {
       OnBets(messageObj);
@@ -50,7 +49,7 @@ function connect_to_crash() {
     if (messageObj.target === "OnCrash") {
       OnCrash(messageObj);
     }
-    if (messageObj.target === "OnCashouts" && isAfterCrash == true) {
+    if (messageObj.target === "OnCashouts") {
       OnCashout(messageObj);
     }
   });
@@ -65,21 +64,19 @@ function connect_to_crash() {
     console.log("Connection to WebSocket server closed");
   });
 }
-function OnStage() {
+function reset() {
   // We print the totalbid sum here before resetting
   console.log("Total Bids:", totalBid);
   console.log("Total Winnings:", totalWin);
   console.log("Casino Earnings: ", totalBid - totalWin);
   totalBid = 0;
   totalWin = 0;
-  isAfterCrash = false;
 }
 function OnCrash(messageObj) {
   // Check if the message is of type 'OnCrash' and extract 'f' and timestamp
   const fValue = messageObj.arguments[0].f;
   const timestampUTC = new Date(messageObj.arguments[0].ts).toUTCString();
   console.log("OnCrash - Odds:", fValue, "Timestamp (UTC):", timestampUTC);
-  isAfterCrash = true;
 }
 function OnBets(messageObj) {
   let bid = messageObj.arguments[0].bid;
@@ -93,7 +90,7 @@ function OnCashout(messageObj) {
     totalWin = win;
   }
   //const { l, won, d, n, q } = messageObj.arguments[0];
-  //console.log("OnCashouts - Details:", { l, won, d, n, q });
+  //console.log(`Players Lost ${d} from ${n}`);
   // q is the array of id's of winners with ou much they won and the odds the won at
 }
 connect_to_crash();
