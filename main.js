@@ -1,15 +1,38 @@
 const WebSocket = require("ws");
+const ExcelJS = require("exceljs");
 
-// Global variable Initialize
+// Global variables initialization
 let totalBid = 0;
 let totalWin = 0;
 let total_players = 0;
-let total_winners = 0;
+let total_losers = 0;
 let odds = 0;
 let timestamp;
 let game_id = -1;
 let cumlative_casino_earnings = 0;
 let user1_balance = 10000;
+
+// Excel workbook and worksheet initialization
+let workbook = new ExcelJS.Workbook();
+let worksheet;
+
+function initExcel() {
+  workbook = new ExcelJS.Workbook();
+  worksheet = workbook.addWorksheet("Results");
+  worksheet.addRow([
+    "Game ID",
+    "Total Bids",
+    "Total Winnings",
+    "Total Players",
+    "Players Lost",
+    "Number of Players",
+    "Odds",
+    "Casino Earnings",
+    "Timestamp",
+    "Casino Cumulative Earnings",
+    "Strategy_1",
+  ]);
+}
 
 // Function to connect to the WebSocket server
 function connect_to_crash() {
@@ -71,6 +94,7 @@ function connect_to_crash() {
     console.log("Connection to WebSocket server closed");
   });
 }
+
 function reset() {
   // We print the totalbid sum here before resetting
   cumlative_casino_earnings = cumlative_casino_earnings + (totalBid - totalWin);
@@ -81,8 +105,9 @@ function reset() {
   totalWin = 0;
   odds = 0;
   total_players = 0;
-  total_winners = 0;
+  total_losers = 0;
 }
+
 function OnCrash(messageObj) {
   // Check if the message is of type 'OnCrash' and extract 'f' and timestamp
   const fValue = messageObj.arguments[0].f;
@@ -92,14 +117,15 @@ function OnCrash(messageObj) {
   });
   timestamp = timestampGMT2;
   odds = fValue;
-  //console.log("OnCrash - Odds:", fValue, "Timestamp (UTC):", timestampUTC);
 }
+
 function OnBets(messageObj) {
   let bid = messageObj.arguments[0].bid;
   if (totalBid < bid) {
     totalBid = bid;
   }
 }
+
 function OnCashout(messageObj) {
   let win = messageObj.arguments[0].won;
   if (totalWin < win) {
@@ -108,29 +134,39 @@ function OnCashout(messageObj) {
   const { l, won, d, n, q } = messageObj.arguments[0];
   total_players = n;
   total_winners = d;
-  //console.log(`Players Lost ${d} from ${n}`);
-  // q is the array of id's of winners with ou much they won and the odds the won at
 }
+
 function Bola_Strategy() {
   if (game_id >= 1 && odds <= 3) {
     user1_balance = user1_balance - 200;
   } else if (game_id >= 1 && odds >= 3) {
-    user1_balance = (200 * 3) + user1_balance;
+    user1_balance = 200 * 3 + user1_balance;
   }
 }
-function print_results() {
-  console.log(
-    "***********************************************************************************************************************"
-  );
-  console.log("Number of Players:", odds < 1.14 ? 9500 : total_players);
-  console.log("Odds:", odds);
-  console.log("Total Bids:", totalBid.toFixed(2));
-  console.log("Total Winnings:", totalWin.toFixed(2));
-  console.log("Players Lost:", total_winners);
-  console.log("Casino Earnings:", (totalBid - totalWin).toFixed(2));
-  console.log("Timestamp:", timestamp);
-  console.log(`Game ID: ${game_id}`);
-  console.log(`Casino Cumlative Earnings: ${cumlative_casino_earnings}`);
-  console.log("user_bolito: ", user1_balance);
+
+async function print_results() {
+  let numPlayers = odds < 1.13 ? 10500 : total_players;
+  let numLosers = odds < 1.13 ? 10500 : total_losers;
+
+  worksheet.addRow([
+    game_id,
+    totalBid.toFixed(2),
+    totalWin.toFixed(2),
+    total_players,
+    numLosers,
+    numPlayers,
+    odds,
+    (totalBid - totalWin).toFixed(2),
+    timestamp,
+    cumlative_casino_earnings,
+    user1_balance,
+  ]);
+
+  // Save the workbook to an Excel file
+  const filename = "results.xlsx";
+  await workbook.xlsx.writeFile(filename);
+  console.log(`Data appended to ${filename}`);
 }
+
+initExcel();
 connect_to_crash();
