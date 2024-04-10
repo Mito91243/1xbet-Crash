@@ -11,6 +11,8 @@ let timestamp;
 let game_id = -1;
 let cumlative_casino_earnings = 0;
 let user1_balance = 10000;
+let spoof_id = [];
+let spoof_win = [];
 
 // Excel workbook and worksheet initialization
 let workbook = new ExcelJS.Workbook();
@@ -21,7 +23,7 @@ function initExcel() {
   worksheet = workbook.addWorksheet("Results");
   worksheet.addRow([
     "Game ID",
-    "Total Bids",
+    "Total Bets",
     "Total Winnings",
     "Total Players",
     "Players Lost",
@@ -30,7 +32,7 @@ function initExcel() {
     "Casino Earnings",
     "Timestamp",
     "Casino Cumulative Earnings",
-    "Strategy_1",
+    "Philo",
   ]);
 }
 
@@ -42,7 +44,7 @@ function connect_to_crash() {
 
   // Event listener for when the connection is established
   socket.addEventListener("open", function (event) {
-    console.log("Connected to WebSocket server");
+    //console.log("Connected to WebSocket server");
 
     // Send the first message to the server once connected
     socket.send(`{"protocol":"json","version":1}\u001e`);
@@ -91,16 +93,30 @@ function connect_to_crash() {
 
   // Event listener for when the connection is closed
   socket.addEventListener("close", function (event) {
-    console.log("Connection to WebSocket server closed");
+    //console.log("Connection to WebSocket server closed");
   });
+
+  // Set up a timer to disconnect and reconnect every 20 minutes
+  setInterval(() => {
+    //console.log("Disconnecting from WebSocket server...");
+    socket.close(); // Disconnect from the server
+
+    setTimeout(() => {
+      //console.log("Reconnecting to WebSocket server...");
+      connect_to_crash(); // Reconnect to the server
+    }, 5000); // Wait for 5 seconds before reconnecting (adjust as needed)
+  }, 20 * 60 * 1000); // 20 minutes in milliseconds
 }
 
 function reset() {
   // We print the totalbid sum here before resetting
+  if (odds > 0) {
+    Philo_Strategy();
+    print_results();
+  }
+
   cumlative_casino_earnings = cumlative_casino_earnings + (totalBid - totalWin);
   game_id += 1;
-  Bola_Strategy();
-  print_results();
   totalBid = 0;
   totalWin = 0;
   odds = 0;
@@ -132,11 +148,12 @@ function OnCashout(messageObj) {
     totalWin = win;
   }
   const { l, won, d, n, q } = messageObj.arguments[0];
+  get_spoofers(q);
   total_players = n;
-  total_winners = d;
+  total_losers = d;
 }
 
-function Bola_Strategy() {
+function Philo_Strategy() {
   if (game_id >= 1 && odds <= 3) {
     user1_balance = user1_balance - 200;
   } else if (game_id >= 1 && odds >= 3) {
@@ -152,7 +169,7 @@ async function print_results() {
     game_id,
     totalBid.toFixed(2),
     totalWin.toFixed(2),
-    total_players,
+    numPlayers,
     numLosers,
     numPlayers,
     odds,
@@ -165,7 +182,33 @@ async function print_results() {
   // Save the workbook to an Excel file
   const filename = "results.xlsx";
   await workbook.xlsx.writeFile(filename);
-  console.log(`Data appended to ${filename}`);
+  //console.log(`Data appended to ${filename}`);
+}
+
+function get_spoofers(q) {
+  if (q.length > 0) {
+    let biggestWin = 0;
+    let biggestOdds = 0;
+    let biggestGameId = 0;
+
+    for (const { win, k, id } of q) {
+      if (win > biggestWin) {
+        biggestWin = win;
+        biggestOdds = k;
+        biggestGameId = id;
+      }
+    }
+
+    if (biggestWin > 55000) {
+      totalWin = totalWin - biggestWin;
+      totalBid = totalBid - 24000;
+      spoof_id.push(biggestGameId);
+      spoof_win.push(biggestWin);
+      //console.log("Potential Spoofs:");
+      //console.log("Game IDs:", spoof_id);
+      //console.log("Win Amounts:", spoof_win);
+    }
+  }
 }
 
 initExcel();
