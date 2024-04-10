@@ -37,7 +37,7 @@ function initExcel() {
 // Function to connect to the WebSocket server
 function connect_to_crash() {
   const socket = new WebSocket(
-    "wss://1xlite-394299.top/games-frame/sockets/crash?appGuid=00000000-0000-0000-0000-000000000000&whence=55&fcountry=66&ref=1&gr=285&lng=en"
+    `https://1xlite-230379.top/games-frame/sockets/crash?appGuid=00000000-0000-0000-0000-000000000000&whence=55&fcountry=66&ref=1&gr=285&lng=en`
   );
 
   // Event listener for when the connection is established
@@ -93,12 +93,6 @@ function connect_to_crash() {
   socket.addEventListener("close", function (event) {
     console.log("Connection to WebSocket server closed");
   });
-
-  if (odds % 32 === 0) {
-    console.log("Odds reached a multiple of 32. Reconnecting to crash...");
-    socket.close(); // Close the existing WebSocket connection
-    connect_to_crash(); // Reconnect to crash
-  }
 }
 
 function reset() {
