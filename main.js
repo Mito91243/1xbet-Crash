@@ -93,6 +93,12 @@ function connect_to_crash() {
   socket.addEventListener("close", function (event) {
     console.log("Connection to WebSocket server closed");
   });
+
+  if (odds % 32 === 0) {
+    console.log("Odds reached a multiple of 32. Reconnecting to crash...");
+    socket.close(); // Close the existing WebSocket connection
+    connect_to_crash(); // Reconnect to crash
+  }
 }
 
 function reset() {
