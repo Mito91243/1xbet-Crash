@@ -1,6 +1,6 @@
 const WebSocket = require("ws");
 
-// Initialize total bid sum
+// Global variable Initialize
 let totalBid = 0;
 let totalWin = 0;
 let total_players = 0;
@@ -9,6 +9,8 @@ let odds = 0;
 let timestamp;
 let game_id = -1;
 let cumlative_casino_earnings = 0;
+let user1_balance = 10000;
+
 // Function to connect to the WebSocket server
 function connect_to_crash() {
   const socket = new WebSocket(
@@ -71,8 +73,9 @@ function connect_to_crash() {
 }
 function reset() {
   // We print the totalbid sum here before resetting
-  cumlative_casino_earnings = totalBid - totalWin;
+  cumlative_casino_earnings = cumlative_casino_earnings + (totalBid - totalWin);
   game_id += 1;
+  Bola_Strategy();
   print_results();
   totalBid = 0;
   totalWin = 0;
@@ -108,7 +111,13 @@ function OnCashout(messageObj) {
   //console.log(`Players Lost ${d} from ${n}`);
   // q is the array of id's of winners with ou much they won and the odds the won at
 }
-
+function Bola_Strategy() {
+  if (game_id >= 1 && odds <= 3) {
+    user1_balance = user1_balance - 200;
+  } else if (game_id >= 1 && odds >= 3) {
+    user1_balance = (200 * 3) + user1_balance;
+  }
+}
 function print_results() {
   console.log(
     "***********************************************************************************************************************"
@@ -122,5 +131,6 @@ function print_results() {
   console.log("Timestamp:", timestamp);
   console.log(`Game ID: ${game_id}`);
   console.log(`Casino Cumlative Earnings: ${cumlative_casino_earnings}`);
+  console.log("user_bolito: ", user1_balance);
 }
 connect_to_crash();
