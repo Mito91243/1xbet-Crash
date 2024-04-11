@@ -13,6 +13,8 @@ let cumlative_casino_earnings = 0;
 let user1_balance = 10000;
 let spoof_id = [];
 let spoof_win = [];
+let counter = 0;
+let socket;
 
 // Excel workbook and worksheet initialization
 let workbook = new ExcelJS.Workbook();
@@ -38,13 +40,13 @@ function initExcel() {
 
 // Function to connect to the WebSocket server
 function connect_to_crash() {
-  const socket = new WebSocket(
+  socket = new WebSocket(
     `https://1xlite-230379.top/games-frame/sockets/crash?appGuid=00000000-0000-0000-0000-000000000000&whence=55&fcountry=66&ref=1&gr=285&lng=en`
   );
 
   // Event listener for when the connection is established
   socket.addEventListener("open", function (event) {
-    //console.log("Connected to WebSocket server");
+    console.log("Connected to WebSocket server");
 
     // Send the first message to the server once connected
     socket.send(`{"protocol":"json","version":1}\u001e`);
@@ -93,19 +95,9 @@ function connect_to_crash() {
 
   // Event listener for when the connection is closed
   socket.addEventListener("close", function (event) {
-    //console.log("Connection to WebSocket server closed");
+    console.log("Connection to WebSocket server closed");
+    reconnect();
   });
-
-  // Set up a timer to disconnect and reconnect every 20 minutes
-  setInterval(() => {
-    //console.log("Disconnecting from WebSocket server...");
-    socket.close(); // Disconnect from the server
-
-    setTimeout(() => {
-      //console.log("Reconnecting to WebSocket server...");
-      connect_to_crash(); // Reconnect to the server
-    }, 5000); // Wait for 5 seconds before reconnecting (adjust as needed)
-  }, 20 * 60 * 1000); // 20 minutes in milliseconds
 }
 
 function reset() {
@@ -180,9 +172,9 @@ async function print_results() {
   ]);
 
   // Save the workbook to an Excel file
-  const filename = "results.xlsx";
+  const filename = `results.xlsx`;
   await workbook.xlsx.writeFile(filename);
-  //console.log(`Data appended to ${filename}`);
+  console.log(`Game_ID: ${game_id} Data appended to ${filename}`);
 }
 
 function get_spoofers(q) {
@@ -193,23 +185,32 @@ function get_spoofers(q) {
 
     for (const { win, k, id } of q) {
       if (win > biggestWin) {
+        if (win > 49000) {
+          totalWin = totalWin - biggestWin;
+          totalBid = totalBid - 24000;
+          spoof_id.push(biggestGameId);
+          spoof_win.push(biggestWin);
+        }
         biggestWin = win;
         biggestOdds = k;
         biggestGameId = id;
       }
-    }
-
-    if (biggestWin > 55000) {
-      totalWin = totalWin - biggestWin;
-      totalBid = totalBid - 24000;
-      spoof_id.push(biggestGameId);
-      spoof_win.push(biggestWin);
-      //console.log("Potential Spoofs:");
-      //console.log("Game IDs:", spoof_id);
-      //console.log("Win Amounts:", spoof_win);
     }
   }
 }
 
 initExcel();
 connect_to_crash();
+
+setInterval(() => {
+  console.log("Disconnecting from WebSocket server...");
+  socket.close(); // Disconnect from the server
+  counter += 1;
+}, 20 * 60 * 1000); // 20 minutes in milliseconds
+
+function reconnect() {
+  console.log("Reconnecting to WebSocket server...");
+  setTimeout(() => {
+    connect_to_crash();
+  }, 5000); // Wait for 5 seconds before reconnecting (adjust as needed)
+}
