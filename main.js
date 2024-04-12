@@ -10,7 +10,11 @@ let odds = 0;
 let timestamp;
 let game_id = -1;
 let cumlative_casino_earnings = 0;
-let user1_balance = 10000;
+let user_1_balance = 200;
+let user_2_balance = 200;
+let user_3_balance = 200;
+let user_4_balance = 200;
+
 let spoof_id = [];
 let spoof_win = [];
 let counter = 0;
@@ -34,7 +38,10 @@ function initExcel() {
     "Casino Earnings",
     "Timestamp",
     "Casino Cumulative Earnings",
-    "Philo",
+    "Strategy 1 Balance",
+    "Strategy 2 Balance",
+    "Strategy 3 Balance",
+    "Strategy 4 Balance",
   ]);
 }
 
@@ -46,7 +53,7 @@ function connect_to_crash() {
 
   // Event listener for when the connection is established
   socket.addEventListener("open", function (event) {
-    console.log("Connected to WebSocket server");
+    //console.log("Connected to WebSocket server");
 
     // Send the first message to the server once connected
     socket.send(`{"protocol":"json","version":1}\u001e`);
@@ -95,17 +102,15 @@ function connect_to_crash() {
 
   // Event listener for when the connection is closed
   socket.addEventListener("close", function (event) {
-    console.log("Connection to WebSocket server closed");
+    //console.log("Connection to WebSocket server closed");
     reconnect();
   });
 }
 
 function reset() {
   // We print the totalbid sum here before resetting
-  if (odds > 0) {
-    Philo_Strategy();
-    print_results();
-  }
+  Strategies();
+  print_results();
 
   cumlative_casino_earnings = cumlative_casino_earnings + (totalBid - totalWin);
   game_id += 1;
@@ -147,9 +152,33 @@ function OnCashout(messageObj) {
 
 function Philo_Strategy() {
   if (game_id >= 1 && odds <= 3) {
-    user1_balance = user1_balance - 200;
+    user_1_balance = user_1_balance - 10;
   } else if (game_id >= 1 && odds >= 3) {
-    user1_balance = 200 * 3 + user1_balance;
+    user_1_balance = 10 * 3 + user_1_balance - 10;
+  }
+}
+
+function Philo_Strategy_2() {
+  if (game_id >= 1 && odds <= 2) {
+    user_2_balance = user_2_balance - 10;
+  } else if (game_id >= 1 && odds >= 2) {
+    user_2_balance = 10 * 2 + user_2_balance - 10;
+  }
+}
+
+function Philo_Strategy_3() {
+  if (game_id >= 1 && odds <= 4) {
+    user_3_balance = user_3_balance - 10;
+  } else if (game_id >= 1 && odds >= 4) {
+    user_3_balance = 10 * 4 + user_3_balance - 10;
+  }
+}
+
+function Philo_Strategy_4() {
+  if (game_id >= 1 && odds <= 1.1) {
+    user_4_balance = user_4_balance - 10;
+  } else if (game_id >= 1 && odds >= 1.1) {
+    user_4_balance = 10 * 1.1 + user_4_balance - 10;
   }
 }
 
@@ -168,13 +197,18 @@ async function print_results() {
     (totalBid - totalWin).toFixed(2),
     timestamp,
     cumlative_casino_earnings,
-    user1_balance,
+    user_1_balance,
+    user_2_balance,
+    user_3_balance,
+    user_4_balance,
   ]);
 
   // Save the workbook to an Excel file
   const filename = `results.xlsx`;
   await workbook.xlsx.writeFile(filename);
-  console.log(`Game_ID: ${game_id} Data appended to ${filename}`);
+  console.log(
+    `UserBalance: ${user_1_balance} @ Odds ${odds} @ Game_ID ${game_id}`
+  );
 }
 
 function get_spoofers(q) {
@@ -199,17 +233,34 @@ function get_spoofers(q) {
   }
 }
 
+function Strategies() {
+  if (odds > 0) {
+    if (user_1_balance > 0) {
+      Philo_Strategy();
+    }
+    if (user_2_balance > 0) {
+      Philo_Strategy_2();
+    }
+    if (user_3_balance > 0) {
+      Philo_Strategy_3();
+    }
+    if (user_4_balance > 0) {
+      Philo_Strategy_4();
+    }
+  }
+}
+
 initExcel();
 connect_to_crash();
 
 setInterval(() => {
-  console.log("Disconnecting from WebSocket server...");
+  //console.log("Disconnecting from WebSocket server...");
   socket.close(); // Disconnect from the server
   counter += 1;
 }, 20 * 60 * 1000); // 20 minutes in milliseconds
 
 function reconnect() {
-  console.log("Reconnecting to WebSocket server...");
+  //console.log("Reconnecting to WebSocket server...");
   setTimeout(() => {
     connect_to_crash();
   }, 5000); // Wait for 5 seconds before reconnecting (adjust as needed)
