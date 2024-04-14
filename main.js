@@ -47,69 +47,79 @@ function initExcel() {
 
 // Function to connect to the WebSocket server
 function connect_to_crash() {
-  socket = new WebSocket(
-    `https://1xlite-230379.top/games-frame/sockets/crash?appGuid=00000000-0000-0000-0000-000000000000&whence=55&fcountry=66&ref=1&gr=285&lng=en`
-  );
+  try {
+    console.log("Connecting to WebSocket server...");
+    socket = new WebSocket(
+      `https://1xlite-230379.top/games-frame/sockets/crash?appGuid=00000000-0000-0000-0000-000000000000&whence=55&fcountry=66&ref=1&gr=285&lng=en`
+    );
 
-  // Event listener for when the connection is established
-  socket.addEventListener("open", function (event) {
-    //console.log("Connected to WebSocket server");
+    // Event listener for when the connection is established
+    socket.addEventListener("open", function (event) {
+      console.log("Connected to WebSocket server");
 
-    // Send the first message to the server once connected
-    socket.send(`{"protocol":"json","version":1}\u001e`);
+      // Send the first message to the server once connected
+      socket.send(`{"protocol":"json","version":1}\u001e`);
 
-    // Wait for 0.15 seconds before sending the second message
-    setTimeout(function () {
-      socket.send(
-        `{"arguments":[{"activity":30,"currency":119}],"invocationId":"1","target":"Guest","type":1}\u001e`
-      );
-    }, 150);
-  });
+      // Wait for 0.15 seconds before sending the second message
+      setTimeout(function () {
+        socket.send(
+          `{"arguments":[{"activity":30,"currency":119}],"invocationId":"1","target":"Guest","type":1}\u001e`
+        );
+      }, 150);
 
-  // Event listener for incoming messages
-  socket.addEventListener("message", function (event) {
-    // Remove control characters at the end of the message
-    let cleanedMessage = event.data.replace(/[\x00-\x1F\x7F]/g, "");
+      // Close the socket after 20 minutes
+      setTimeout(function () {
+        console.log("Closing WebSocket connection...");
+        socket.close();
+      }, 1190000); // 20 minutes in milliseconds
+    });
 
-    // Parse the cleaned message as JSON
-    let messageObj;
-    try {
-      messageObj = JSON.parse(cleanedMessage);
-    } catch (error) {
-      console.error("Error parsing JSON:", error);
-      return;
-    }
-    if (messageObj.target === "OnStage") {
-      reset(messageObj);
-    }
+    // Event listener for incoming messages
+    socket.addEventListener("message", function (event) {
+      // Remove control characters at the end of the message
+      let cleanedMessage = event.data.replace(/[\x00-\x1F\x7F]/g, "");
 
-    if (messageObj.target === "OnBets") {
-      OnBets(messageObj);
-    }
-    // Check if the message is of type 'OnCrash' and extract 'f' and timestamp
-    if (messageObj.target === "OnCrash") {
-      OnCrash(messageObj);
-    }
-    if (messageObj.target === "OnCashouts") {
-      OnCashout(messageObj);
-    }
-  });
+      // Parse the cleaned message as JSON
+      let messageObj;
+      try {
+        messageObj = JSON.parse(cleanedMessage);
+      } catch (error) {
+        console.error("Error parsing JSON:", error);
+        return;
+      }
+      if (messageObj.target === "OnStage") {
+        reset(messageObj);
+      }
 
-  // Event listener for errors
-  socket.addEventListener("error", function (event) {
-    console.error("WebSocket error:", event);
-  });
+      if (messageObj.target === "OnBets") {
+        OnBets(messageObj);
+      }
+      // Check if the message is of type 'OnCrash' and extract 'f' and timestamp
+      if (messageObj.target === "OnCrash") {
+        OnCrash(messageObj);
+      }
+      if (messageObj.target === "OnCashouts") {
+        OnCashout(messageObj);
+      }
+    });
 
-  // Event listener for when the connection is closed
-  socket.addEventListener("close", function (event) {
-    //console.log("Connection to WebSocket server closed");
-    reconnect();
-  });
+    // Event listener for errors
+    socket.addEventListener("error", function (event) {
+      console.error("WebSocket error:", event);
+    });
+
+    // Event listener for when the connection is closed
+    socket.addEventListener("close", function (event) {
+      console.log("Connection to WebSocket server closed");
+    });
+  } catch (error) {
+    console.error("An error occurred:", error);
+  }
 }
 
 function reset() {
   // We print the totalbid sum here before resetting
-  Strategies();
+  //Strategies();
   print_results();
 
   cumlative_casino_earnings = cumlative_casino_earnings + (totalBid - totalWin);
@@ -206,9 +216,6 @@ async function print_results() {
   // Save the workbook to an Excel file
   const filename = `results.xlsx`;
   await workbook.xlsx.writeFile(filename);
-  console.log(
-    `UserBalance: ${user_1_balance} @ Odds ${odds} @ Game_ID ${game_id}`
-  );
 }
 
 function get_spoofers(q) {
@@ -253,15 +260,6 @@ function Strategies() {
 initExcel();
 connect_to_crash();
 
-setInterval(() => {
-  //console.log("Disconnecting from WebSocket server...");
-  socket.close(); // Disconnect from the server
-  counter += 1;
-}, 20 * 60 * 1000); // 20 minutes in milliseconds
 
-function reconnect() {
-  //console.log("Reconnecting to WebSocket server...");
-  setTimeout(() => {
-    connect_to_crash();
-  }, 5000); // Wait for 5 seconds before reconnecting (adjust as needed)
-}
+// Set the interval to 1 minute (1 minute = 60000 milliseconds)
+setInterval(connect_to_crash, 1200000);
