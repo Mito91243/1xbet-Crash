@@ -1,5 +1,6 @@
 const WebSocket = require("ws");
 const ExcelJS = require("exceljs");
+const Workbook = ExcelJS.Workbook;
 
 // Global variables initialization
 let totalBid = 0;
@@ -14,6 +15,7 @@ let user_1_balance = 200;
 let user_2_balance = 200;
 let user_3_balance = 200;
 let user_4_balance = 200;
+let double_down_C = 1;
 
 let spoof_id = [];
 let spoof_win = [];
@@ -21,11 +23,11 @@ let counter = 0;
 let socket;
 
 // Excel workbook and worksheet initialization
-let workbook = new ExcelJS.Workbook();
+let workbook = new Workbook();
 let worksheet;
 
 function initExcel() {
-  workbook = new ExcelJS.Workbook();
+  workbook = new Workbook();
   worksheet = workbook.addWorksheet("Results");
   worksheet.addRow([
     "Game ID",
@@ -50,7 +52,7 @@ function connect_to_crash() {
   try {
     console.log("Connecting to WebSocket server...");
     socket = new WebSocket(
-      `https://1xlite-230379.top/games-frame/sockets/crash?appGuid=00000000-0000-0000-0000-000000000000&whence=55&fcountry=66&ref=1&gr=285&lng=en`
+      `wss://1xbet.global/games-frame/sockets/crash?whence=50&fcountry=66&ref=1&gr=88&appGuid=00000000-0000-0000-0000-000000000000&lng=en`
     );
 
     // Event listener for when the connection is established
@@ -119,9 +121,8 @@ function connect_to_crash() {
 
 function reset() {
   // We print the totalbid sum here before resetting
-  //Strategies();
+  Strategies();
   print_results();
-
   cumlative_casino_earnings = cumlative_casino_earnings + (totalBid - totalWin);
   game_id += 1;
   totalBid = 0;
@@ -160,15 +161,18 @@ function OnCashout(messageObj) {
   total_losers = d;
 }
 
-function Philo_Strategy() {
-  if (game_id >= 1 && odds <= 3) {
-    user_1_balance = user_1_balance - 10;
-  } else if (game_id >= 1 && odds >= 3) {
-    user_1_balance = 10 * 3 + user_1_balance - 10;
+function double_down() {
+  if (game_id >= 1 && odds <= 2) {
+    user_1_balance = user_1_balance - (10 * double_down_C);
+    double_down_C = double_down_C + 1;
+  } else if (game_id >= 1 && odds >= 2) {
+    user_1_balance = (10 * double_down_C * 2) + user_1_balance - 10;
+    double_down_C = 1;
   }
 }
 
-function Philo_Strategy_2() {
+// CASHOUT AT 2X EACH SINGLE GAME
+function x2_strategy() {
   if (game_id >= 1 && odds <= 2) {
     user_2_balance = user_2_balance - 10;
   } else if (game_id >= 1 && odds >= 2) {
@@ -176,19 +180,21 @@ function Philo_Strategy_2() {
   }
 }
 
-function Philo_Strategy_3() {
-  if (game_id >= 1 && odds <= 4) {
+// CASHOUT AT 1.1X EACH SINGLE GAME
+function x1_1_strategy() {
+  if (game_id >= 1 && odds <= 1.1) {
     user_3_balance = user_3_balance - 10;
-  } else if (game_id >= 1 && odds >= 4) {
-    user_3_balance = 10 * 4 + user_3_balance - 10;
+  } else if (game_id >= 1 && odds >= 1.1) {
+    user_3_balance = 10 * 1.1 + user_3_balance - 10;
   }
 }
 
-function Philo_Strategy_4() {
-  if (game_id >= 1 && odds <= 1.1) {
+// CASHOUT AT 3X EACH SINGLE GAME
+function x3_strategy() {
+  if (game_id >= 1 && odds <= 3) {
     user_4_balance = user_4_balance - 10;
-  } else if (game_id >= 1 && odds >= 1.1) {
-    user_4_balance = 10 * 1.1 + user_4_balance - 10;
+  } else if (game_id >= 1 && odds >= 3) {
+    user_4_balance = 10 * 3 + user_4_balance - 10;
   }
 }
 
@@ -243,23 +249,22 @@ function get_spoofers(q) {
 function Strategies() {
   if (odds > 0) {
     if (user_1_balance > 0) {
-      Philo_Strategy();
+      double_down();
     }
     if (user_2_balance > 0) {
-      Philo_Strategy_2();
+      x2_strategy();
     }
     if (user_3_balance > 0) {
-      Philo_Strategy_3();
+      x1_1_strategy();
     }
     if (user_4_balance > 0) {
-      Philo_Strategy_4();
+      x3_strategy();
     }
   }
 }
 
 initExcel();
 connect_to_crash();
-
 
 // Set the interval to 1 minute (1 minute = 60000 milliseconds)
 setInterval(connect_to_crash, 1200000);
